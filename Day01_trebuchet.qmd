@@ -46,6 +46,8 @@ Consider your entire calibration document. What is the sum of all of the calibra
 ```
 
 ```{r puzzle1}
+.example1 <- c("1abc2", "pqr3stu8vwx", "a1b2c3d4e5f", "treb7uchet")
+
 .raw |> 
   str_split(pattern = "") |> 
   map(.f = ~ .x[!(.x %in% letters)]) |> 
@@ -54,12 +56,90 @@ Consider your entire calibration document. What is the sum of all of the calibra
   unlist() |> 
   sum()
 
+.puz1 <- .raw
+
+.puz1_answer <- 0L
+
+for (i in seq_along(.puz1)){
+  
+  .n <- 
+    .puz1[i] |> 
+    str_match_all(pattern = "\\d") |> 
+    unlist() |> 
+    (\(x) { str_c(x[1], x[length(x)]) })() |> 
+    as.integer() 
+  
+  .puz1_answer <- .puz1_answer + .n
+  
+}
+
+.puz1_answer
 ```
 
 `54605` is the sum of all the calibration numbers.
 
 ## Puzzle 2
 
-```{r puzzle2}
+Your calculation isn't quite right. It looks like some of the digits are actually *spelled out with letters*: `one`, `two`, `three`, `four`, `five`, `six`, `seven`, `eight`, and `nine` also count as valid "digits".
+
+Equipped with this new information, you now need to find the real first and last digit on each line. For example:
+
+```
+two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen
 ```
 
+In this example, the calibration values are `29`, `83`, `13`, `24`, `42`, `14`, and `76`. Adding these together produces `281`.
+
+What is the sum of all of the calibration values?
+
+```{r puzzle2}
+.example2 <- c("two1nine", "eightwothree", "abcone2threexyz", "xtwone3four", "4nineeightseven2", "zoneight234", "7pqrstsixteen")
+
+.numbers <- "(?<value>\\d|one|two|three|four|five|six|seven|eight|nine)"
+.numbers_end <- str_c(".*", .numbers)
+.lookup <- c("one" = 1,"two" = 2, "three" = 3, "four" = 4, "five" = 5, 
+             "six" = 6, "seven" = 7, "eight" = 8, "nine" = 9, 
+             setNames(1:9, as.character(1:9)))
+
+.puz2 <- .raw
+
+.puz2_answer <- 0L
+
+for (i in seq_along(.puz2)){
+  
+  .string <- .puz2[i]
+  
+  .first <- 
+    .string |> 
+    str_match(.numbers) |> 
+    (\(x) { x[1, "value"] })() |> 
+    (\(x) {.lookup[x]})()
+  
+  # necessary to do a second regex for ending value in case of odd character combos
+  # e.g., if string is twone, first value is two and last is one
+  # e.g., if string is nineight, first value is nine and last value is eight
+  .last <- 
+    .string |> 
+    str_match(.numbers_end) |> 
+    (\(x) { x[1, "value"] })() |> 
+    (\(x) {.lookup[x]})()
+  
+  .n <- as.integer(str_c(.first, .last))
+
+  .puz2_answer <- .puz2_answer + .n
+  
+}
+
+.puz2_answer
+
+
+```
+
+`55429` is the sum of all the calibration values
+too low
