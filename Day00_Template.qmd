@@ -10,6 +10,8 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+
+options(scipen = 999999)
 ```
 
 # Day 00: Template
