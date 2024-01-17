@@ -1,0 +1,168 @@
+---
+title: "Day00_Template"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+options(scipen = 999999)
+```
+
+# Day 03: Gear Ratios
+
+## Puzzle 1
+
+You and the Elf eventually reach a gondola lift station; he says the gondola lift will take you up to the *water source*, but this is as far as he can bring you. You go inside.
+
+It doesn't take long to find the gondolas, but there seems to be a problem: they're not moving.
+
+"Aaah!"
+
+You turn around to see a slightly-greasy Elf with a wrench and a look of surprise. "Sorry, I wasn't expecting anyone! The gondola lift isn't working right now; it'll still be a while before I can fix it." You offer to help.
+
+The engineer explains that an engine part seems to be missing from the engine, but nobody can figure out which one. If you can *add up all the part numbers* in the engine schematic, it should be easy to work out which part is missing.
+
+The engine schematic (your puzzle input) consists of a visual representation of the engine. There are lots of numbers and symbols you don't really understand, but apparently *any number adjacent to a symbol*, even diagonally, is a "part number" and should be included in your sum. (Periods (.) do not count as a symbol.)
+
+Here is an example engine schematic:
+```
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+```
+
+In this schematic, two numbers are *not* part numbers because they are not adjacent to a symbol: `114` (top right) and `58` (middle right). Every other number is adjacent to a symbol and so is a part number; their sum is `4361`.
+
+Of course, the actual engine schematic is much larger. *What is the sum of all of the part numbers in the engine schematic*?
+
+```{r input}
+.test <- 
+  read_lines("467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..")
+
+.input <- 
+  read_lines(file = "input data/day03_input.txt")
+
+```
+
+```{r puzzle1}
+.i <- .input
+
+.numbers <- as.character(0:10)
+
+.m <- 
+  .i |> 
+  str_replace_all("\\.", " ") |> 
+  str_split("", simplify = TRUE)
+
+.blank_col <- 
+  matrix(data = rep(" ", nrow(.m)), 
+         ncol = 1)
+
+.blank_row <- 
+  matrix(data = rep(" ", ncol(.m) + 2), 
+         nrow = 1)
+
+# append additional blank columns and rows around matrix to avoid logic considering
+#   out of bound indexes later
+.m <- cbind(.blank_col, .m, .blank_col)
+.m <- rbind(.blank_row, .m, .blank_row)
+
+
+# vector of symbols present in data
+.symbols <- 
+  as.vector(.m) |> 
+  (\(x) x[!(x == " ")] )() |> 
+  (\(x) x[!(x %in% .numbers)] )() |> 
+  unique()
+
+# blank result vector to assign our matches back to
+.results <- 
+  matrix(data = 0L, 
+         nrow = nrow(.m), 
+         ncol = ncol(.m))
+
+
+for (r in 1:nrow(.m)) {
+  for (c in 1:ncol(.m)) {
+    
+    # if our coordinate is a number and doesn't have a number to the left,
+    #    it's the start of a new number, so we'll figure out it's value
+    if (.m[r, c] %in% .numbers &&
+        !(.m[r, (c - 1)]) %in% .numbers 
+    ) {
+      
+      .row <- .m[r, c:ncol(.m)]
+      .brk <- ( which(!(.row %in% .numbers))[[1]] ) - 1
+      .val <- as.integer(str_c(.row[1:.brk], collapse = "")) 
+      
+      # now we need to figure out if any surrounding values touching this number are symbols
+      # if so, then we count it
+      
+      .above <- max(.m[(r - 1), (c - 1):(c + .brk)] %in% .symbols)
+      
+      .below <- max(.m[(r + 1), (c - 1):(c + .brk)] %in% .symbols)
+      
+      .left <- max(.m[r, (c - 1)] %in% .symbols)
+      
+      .right <- max(.m[r, (c + .brk)] %in% .symbols)
+      
+      if (max(.above, .below, .left, .right) >= 1) {
+        
+        .results[r, c] <- .val
+        
+      } else {
+        
+        next
+        
+      }
+      
+      
+    } else {
+      
+      next
+      
+    }
+    
+  } # end COLUMN for statement
+} # end ROW for statement
+
+# locations of all symbols
+# which(matrix(.m %in% .symbols, ncol = ncol(.m)) == TRUE, arr.ind = TRUE)
+
+.results |> 
+  sum()
+
+
+```
+
+`528,819` is the sum of the part numbers.
+
+
+
+## Puzzle 2
+
+```{r puzzle2}
+```
+
