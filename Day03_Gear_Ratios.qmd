@@ -49,7 +49,7 @@ In this schematic, two numbers are *not* part numbers because they are not adjac
 Of course, the actual engine schematic is much larger. *What is the sum of all of the part numbers in the engine schematic*?
 
 ```{r input}
-.test <- 
+test <- 
   read_lines("467..114..
 ...*......
 ..35..633.
@@ -61,108 +61,175 @@ Of course, the actual engine schematic is much larger. *What is the sum of all o
 ...$.*....
 .664.598..")
 
-.input <- 
+input <- 
   read_lines(file = "input data/day03_input.txt")
 
 ```
 
+
 ```{r puzzle1}
-.i <- .input
+i <- input
 
-.numbers <- as.character(0:10)
+numbers <- as.character(0:10)
 
-.m <- 
-  .i |> 
+m <- 
+  i |> 
   str_replace_all("\\.", " ") |> 
   str_split("", simplify = TRUE)
 
-.blank_col <- 
-  matrix(data = rep(" ", nrow(.m)), 
+blank_col <- 
+  matrix(data = rep(" ", nrow(m)), 
          ncol = 1)
 
-.blank_row <- 
-  matrix(data = rep(" ", ncol(.m) + 2), 
+blank_row <- 
+  matrix(data = rep(" ", ncol(m) + 2), 
          nrow = 1)
 
 # append additional blank columns and rows around matrix to avoid logic considering
 #   out of bound indexes later
-.m <- cbind(.blank_col, .m, .blank_col)
-.m <- rbind(.blank_row, .m, .blank_row)
+m <- cbind(blank_col, m, blank_col)
+m <- rbind(blank_row, m, blank_row)
 
 
 # vector of symbols present in data
-.symbols <- 
-  as.vector(.m) |> 
+symbols <- 
+  as.vector(m) |> 
   (\(x) x[!(x == " ")] )() |> 
-  (\(x) x[!(x %in% .numbers)] )() |> 
+  (\(x) x[!(x %in% numbers)] )() |> 
   unique()
 
 # blank result vector to assign our matches back to
-.results <- 
+results <- 
   matrix(data = 0L, 
-         nrow = nrow(.m), 
-         ncol = ncol(.m))
+         nrow = nrow(m), 
+         ncol = ncol(m))
 
 
-for (r in 1:nrow(.m)) {
-  for (c in 1:ncol(.m)) {
+for (r in 1:nrow(m)) {
+  for (c in 1:ncol(m)) {
     
     # if our coordinate is a number and doesn't have a number to the left,
     #    it's the start of a new number, so we'll figure out it's value
-    if (.m[r, c] %in% .numbers &&
-        !(.m[r, (c - 1)]) %in% .numbers 
+    if (m[r, c] %in% numbers &&
+        !(m[r, (c - 1)]) %in% numbers 
     ) {
       
-      .row <- .m[r, c:ncol(.m)]
-      .brk <- ( which(!(.row %in% .numbers))[[1]] ) - 1
-      .val <- as.integer(str_c(.row[1:.brk], collapse = "")) 
+      row <- m[r, c:ncol(m)]
+      brk <- ( which(!(row %in% numbers))[[1]] ) - 1
+      val <- as.integer(str_c(row[1:brk], collapse = "")) 
       
       # now we need to figure out if any surrounding values touching this number are symbols
       # if so, then we count it
       
-      .above <- max(.m[(r - 1), (c - 1):(c + .brk)] %in% .symbols)
+      above <- max(m[(r - 1), (c - 1):(c + brk)] %in% symbols)
       
-      .below <- max(.m[(r + 1), (c - 1):(c + .brk)] %in% .symbols)
+      below <- max(m[(r + 1), (c - 1):(c + brk)] %in% symbols)
       
-      .left <- max(.m[r, (c - 1)] %in% .symbols)
+      left <- max(m[r, (c - 1)] %in% symbols)
       
-      .right <- max(.m[r, (c + .brk)] %in% .symbols)
+      right <- max(m[r, (c + brk)] %in% symbols)
       
-      if (max(.above, .below, .left, .right) >= 1) {
+      if (max(above, below, left, right) >= 1) {
         
-        .results[r, c] <- .val
+        results[r, c] <- val
         
       } else {
-        
         next
-        
       }
       
-      
     } else {
-      
       next
-      
     }
     
   } # end COLUMN for statement
 } # end ROW for statement
 
-# locations of all symbols
-# which(matrix(.m %in% .symbols, ncol = ncol(.m)) == TRUE, arr.ind = TRUE)
 
-.results |> 
+results |> 
   sum()
-
-
 ```
 
-`528,819` is the sum of the part numbers.
+`528819` is the sum of the part numbers.
 
 
 
 ## Puzzle 2
 
-```{r puzzle2}
+The engineer finds the missing part and installs it in the engine! As the engine springs to life, you jump in the closest gondola, finally ready to ascend to the water source.
+
+You don't seem to be going very fast, though. Maybe something is still wrong? Fortunately, the gondola has a phone labeled "help", so you pick it up and the engineer answers.
+
+Before you can explain the situation, she suggests that you look out the window. There stands the engineer, holding a phone in one hand and waving with the other. You're going so slowly that you haven't even left the station. You exit the gondola.
+
+The missing part wasn't the only issue - one of the gears in the engine is wrong. A *gear* is any `*` symbol that is adjacent to *exactly two part numbers*. Its gear ratio is the result of multiplying those two numbers together.
+
+This time, you need to find the gear ratio of every gear and add them all up so that the engineer can figure out which gear needs to be replaced.
+
+Consider the same engine schematic again:
+```
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
 ```
 
+In this schematic, there are *two* gears. The first is in the top left; it has part numbers `467` and `35`, so its gear ratio is `16345`. The second gear is in the lower right; its gear ratio is `451490`. (The * adjacent to `617` is not a gear because it is only adjacent to one part number.) Adding up all of the gear ratios produces `467835`.
+
+*What is the sum of all of the gear ratios in your engine schematic?*
+
+```{r puzzle2}
+# locations of all * symbols
+stars <- 
+  which(matrix(m == "*", ncol = ncol(m)) == TRUE, arr.ind = TRUE) |> 
+  as_tibble()
+
+results_dupe <- results
+
+results_loc <- 
+  which(results != 0, arr.ind = TRUE) |> 
+  as_tibble()
+
+for (i in seq_along(results_loc$row)) {
+  
+  row <- results_loc$row[[i]]
+  col <- results_loc$col[[i]]
+  
+  val <- results[row, col]
+  ln <- str_length(val) - 1
+  results_dupe[row, col:(col + ln)] <- val
+  
+}
+
+get_neighbors <- function(row, col, .m = results_dupe) {
+  c(
+    c(.m[row - 1, (col - 1):(col + 1)]), 
+    c(.m[row, col - 1]), 
+    c(.m[row, col + 1]), 
+    c(.m[row + 1, (col - 1):(col + 1)])
+    ) |> 
+    (\(x) x[x != "0" & !(x %in% symbols)] )() |> 
+    unique()
+}
+
+
+stars |> 
+  mutate(vals = map2(.x = row,
+                     .y = col, 
+                     .f = ~ get_neighbors(row = .x, col = .y))) |> 
+  mutate(len = map_int(.x = vals, ~ length(.x))) |> 
+  filter(len == 2) |> 
+  mutate(prod = map_int(.x = vals, .f = prod)) |> 
+  pull(prod) |> 
+  sum()
+
+
+
+```
+
+80403602 is the answer is puzzle 2!
