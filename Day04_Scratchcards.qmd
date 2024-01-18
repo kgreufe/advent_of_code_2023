@@ -2,7 +2,7 @@
 title: "Day00_Template"
 format: html
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 
@@ -65,12 +65,42 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11")
 input_raw <- 
   read_lines(file = "input data/day04_input.txt")
 
+process_input <- function(.string) {
+  .string |> 
+    as_tibble() |> 
+    separate_wider_delim(cols = value, 
+                         delim = ":", 
+                         names = c("card", "value")) |> 
+    mutate(card = as.integer(str_replace(card, "(?i)card", ""))) |> 
+    separate_wider_delim(cols = value, 
+                         delim = "|", 
+                         names = c("winners", "numbers")) |> 
+    mutate(across(where(is.character), str_trim)) |> 
+    mutate(across(where(is.character), ~ str_replace_all(.x, "  ", " "))) |> 
+    mutate(winners = map(.x = winners, 
+                         .f = ~ as.integer(str_split_1(.x, " ")) )) |> 
+    mutate(numbers = map(.x = numbers, 
+                         .f = ~ as.integer(str_split_1(.x, " ")) ))
+}
 
+test <- process_input(test_raw)
+input <- process_input(input_raw)
 ```
+
 
 ```{r puzzle1}
+puzz <- input
+
+puzz |> 
+  mutate(matches = map2_int(.x = winners, 
+                            .y = numbers, 
+                            .f = ~ sum(.y %in% .x))) |> 
+  mutate(value = if_else(matches == 0, 0, 2^(matches - 1))) |> 
+  pull(value) |> 
+  sum()
 ```
 
+This input's cards are worth `21919` points in total.
 
 ## Puzzle 2
 
