@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 
-options(scipen = 999999)
+options(scipen = 999999, paged.print=FALSE)
 ```
 
 # Day 00: Template
