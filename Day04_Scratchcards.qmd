@@ -197,3 +197,51 @@ nrow(puzz2)
 ```
 
 We'll end up with `9,881,048` cards in total.
+
+
+
+Attempt to solve using recursion...
+```{r}
+start <- Sys.time()
+
+p2 <- 
+  puzz |> 
+  select(-(winners:numbers), -value) |> 
+  mutate(n = 0L)
+
+lkup <- p2
+
+get_n <- function(card) {
+  
+  .matches <- lkup$matches[lkup$card == card]
+  
+  if (.matches == 0L) {
+    return(0L)
+  } else {
+  
+  .range <- (card + 1L):(card + .matches)
+  
+  .df <- 
+    lkup[lkup$card %in% .range, ]
+    
+  .df <- 
+    .df |> 
+    mutate(n = map_int(.x = card, .f = ~ get_n(.x)))
+  
+  sum(.df$n) + nrow(.df)
+  }
+}
+
+p2 <- 
+  p2 |> 
+  mutate(n = map_int(.x = card, .f = ~ get_n(.x))) 
+
+sum(p2$n) + nrow(p2)
+
+end <- Sys.time()
+
+difftime(end, start)
+  
+```
+
+Works for test case, takes way too long on actual data set. 
