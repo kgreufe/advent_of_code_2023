@@ -211,7 +211,9 @@ p2 <-
 
 lkup <- p2
 
-get_n <- function(card) {
+get_n <- function(card, lvl = 0) {
+  
+  print(lvl)
   
   .matches <- lkup$matches[lkup$card == card]
   
@@ -226,7 +228,7 @@ get_n <- function(card) {
     
   .df <- 
     .df |> 
-    mutate(n = map_int(.x = card, .f = ~ get_n(.x)))
+    mutate(n = map_int(.x = card, .f = ~ get_n(card = .x, lvl = lvl + 1)))
   
   sum(.df$n) + nrow(.df)
   }
@@ -234,7 +236,7 @@ get_n <- function(card) {
 
 p2 <- 
   p2 |> 
-  mutate(n = map_int(.x = card, .f = ~ get_n(.x))) 
+  mutate(n = map_int(.x = card, .f = ~ get_n(card = .x, lvl = 1))) 
 
 sum(p2$n) + nrow(p2)
 
@@ -244,4 +246,4 @@ difftime(end, start)
   
 ```
 
-Works for test case, takes way too long on actual data set. 
+Works for test case, takes way too long on actual data set. It gets the correct result, but takes something like 2 hours to complete using recursion on my computer, compared to five minutes for original solution.
