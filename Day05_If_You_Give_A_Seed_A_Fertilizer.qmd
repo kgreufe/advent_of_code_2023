@@ -124,10 +124,95 @@ So, the lowest location number in this example is *3*5.
 ## Puzzle 1
 
 ```{r input}
+read_test <- read_lines(file = "input data/day05_input_test.txt")
+read_input <- read_lines(file = "input data/day05_input.txt")
 ```
 
 ```{r puzzle1}
+v <- read_input
+
+seeds <- 
+  v[str_detect(v, "seeds:")] |> 
+  str_replace("seeds: ", "") |> 
+  str_split_1(" ") |> 
+  as.numeric()
+
+v <- v[!str_detect(v, "seeds:") & !(v == "")]
+
+v <- 
+  v |> 
+  as_tibble() |> 
+  mutate(grp = cumsum(str_detect(value, ":"))) |> 
+  mutate(var = if_else(str_detect(value, ":"), "name", "nums")) |> 
+  pivot_wider(id_cols = grp, 
+              names_from = var, 
+              values_from = value, 
+              values_fn = list) |> 
+  unnest(cols = name) |> 
+  mutate(name = str_replace(name, " map:", "")) |> 
+  separate_wider_delim(cols = name, 
+                       delim = "-to-", 
+                       names = c("from", "to"), 
+                       cols_remove = FALSE) |> 
+  relocate(name, .after = grp)
+
+v <- 
+  v |> 
+  mutate(nums = map(.x = nums, .f = ~ as_tibble(x = .x) |> 
+                      separate_wider_delim(cols = value, 
+                                           delim = " ", 
+                                           names = c("dest", "source", "len")) |> 
+                      mutate(across(.cols = everything(), 
+                                    .fns = as.numeric)) )) 
+
+find_match <- function(n, .df) {
+  
+  .df <- 
+    .df |> 
+    filter(source <= n)
+  
+  if (nrow(.df) >= 1) {
+    
+    for (j in 1:nrow(.df)) {
+      
+      r <- .df[j, ] 
+
+      if (between(n, r$source, r$source + r$len - 1)) {
+        
+        n <-  r$dest + (n - r$source)
+        
+        break
+      } 
+    } 
+  } 
+  
+  return(n)
+  
+}
+
+
+matches <- vector("integer", length = length(seeds))
+
+
+for (s in seq_along(seeds)) {
+
+  n <- seeds[[s]]
+  
+  for (i in 1:nrow(v)) {
+    
+    n <- find_match(n = n, .df = v$nums[[i]])
+    
+  }
+  
+  matches[[s]] <- n
+  
+}
+
+min(matches)
+
 ```
+
+The minimum location number, given my input seed numbers, is `177,942,185`
 
 
 ## Puzzle 2
